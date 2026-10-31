@@ -33,7 +33,7 @@ const fmtDate = (iso: string | null) =>
         :description="data.customer.email"
         class="mt-3"
       />
-      <div class="grid gap-6 xl:grid-cols-[1fr_2fr]">
+      <div class="grid grid-cols-1 gap-6 xl:grid-cols-[1fr_2fr]">
         <AdminCard>
           <dl class="space-y-4 text-sm">
             <div>

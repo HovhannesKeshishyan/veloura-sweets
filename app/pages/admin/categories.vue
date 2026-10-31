@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { ImageInput } from "#shared/schemas/fields";
 import type { CategoryDTO } from "#shared/types/api";
 
 definePageMeta({ layout: "admin", middleware: "admin" });
@@ -6,6 +7,10 @@ useSeoMeta({ title: "Categories · Admin", robots: "noindex, nofollow" });
 
 const { data, error, refresh } = await useFetch<{ items: CategoryDTO[] }>(
   "/api/admin/categories",
+);
+const { data: settings } = await useFetch<{ uploadsEnabled: boolean }>(
+  "/api/admin/settings",
+  { key: "admin-settings-upload" },
 );
 
 const editing = ref<CategoryDTO | null>(null);
@@ -22,11 +27,15 @@ const form = reactive({
 const fieldErrors = ref<Record<string, string>>({});
 const message = ref<{ tone: "error" | "success"; text: string } | null>(null);
 const saving = ref(false);
+const uploading = ref(false);
+// Full upload result (provider, publicId, size) for the current image URL.
+const uploadedImage = ref<ImageInput | null>(null);
 
 function open(category: CategoryDTO | null) {
   editing.value = category;
   showForm.value = true;
   fieldErrors.value = {};
+  uploadedImage.value = null;
   Object.assign(form, {
     name: category?.name ?? "",
     slug: category?.slug ?? "",
@@ -38,17 +47,54 @@ function open(category: CategoryDTO | null) {
   });
 }
 
+async function upload(event: Event) {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+  if (!file) return;
+  uploading.value = true;
+  message.value = null;
+  try {
+    const body = new FormData();
+    body.append("file", file);
+    const image = await $fetch<ImageInput>("/api/admin/uploads", {
+      method: "POST",
+      body,
+    });
+    uploadedImage.value = image;
+    form.imageUrl = image.url;
+    if (!form.imageAlt.trim()) form.imageAlt = form.name;
+  } catch (e) {
+    message.value = {
+      tone: "error",
+      text: apiErrorMessage(e, "Upload failed."),
+    };
+  } finally {
+    uploading.value = false;
+    input.value = "";
+  }
+}
+
 async function save() {
   saving.value = true;
   fieldErrors.value = {};
   message.value = null;
+  const imageUrl = form.imageUrl.trim();
+  if (!imageUrl) {
+    fieldErrors.value = { image: "Add an image URL or upload an image" };
+    message.value = {
+      tone: "error",
+      text: "Please fix the highlighted fields.",
+    };
+    saving.value = false;
+    return;
+  }
+  const uploaded =
+    uploadedImage.value?.url === imageUrl ? uploadedImage.value : null;
   const body = {
     name: form.name,
     slug: form.slug.trim() || undefined,
     description: form.description.trim() || undefined,
-    image: form.imageUrl.trim()
-      ? { url: form.imageUrl.trim(), alt: form.imageAlt.trim() }
-      : undefined,
+    image: { ...uploaded, url: imageUrl, alt: form.imageAlt.trim() },
     sortOrder: Number(form.sortOrder) || 0,
     isActive: form.isActive,
   };
@@ -135,13 +181,43 @@ async function remove(category: CategoryDTO) {
             class="field"
           />
         </div>
-        <FormField
-          v-model="form.imageUrl"
-          label="Image URL"
-          type="url"
-          :error="fieldErrors['image.url']"
-        />
+        <div class="flex items-end gap-3 flex-wrap">
+          <FormField
+            v-model="form.imageUrl"
+            label="Image URL"
+            type="url"
+            required
+            class="flex-1"
+            :hint="
+              settings?.uploadsEnabled
+                ? 'Paste a URL or upload an image'
+                : undefined
+            "
+            :error="fieldErrors.image ?? fieldErrors['image.url']"
+          />
+          <label
+            v-if="settings?.uploadsEnabled"
+            class="btn-outline self-center cursor-pointer whitespace-nowrap"
+            :class="{ 'opacity-50': uploading }"
+          >
+            {{ uploading ? "Uploading…" : "Upload image" }}
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/avif"
+              class="sr-only"
+              :disabled="uploading"
+              @change="upload"
+            />
+          </label>
+        </div>
         <FormField v-model="form.imageAlt" label="Image description" />
+        <ProductImage
+          v-if="form.imageUrl.trim()"
+          :image="{ url: form.imageUrl.trim(), alt: form.imageAlt }"
+          :label="form.name || 'Category image'"
+          :width="160"
+          class="h-20 w-20 rounded-lg sm:col-span-2"
+        />
         <FormField
           v-model="form.sortOrder"
           label="Sort order"
@@ -153,7 +229,7 @@ async function remove(category: CategoryDTO) {
             v-model="form.isActive"
             type="checkbox"
             class="h-4 w-4 accent-cocoa-900"
-          >
+          />
           Visible in the shop
         </label>
         <div class="flex gap-3 sm:col-span-2">
@@ -170,7 +246,7 @@ async function remove(category: CategoryDTO) {
     <AdminNotice v-if="error" tone="error">{{
       apiErrorMessage(error)
     }}</AdminNotice>
-    <AdminCard v-else-if="data" class="!p-0">
+    <AdminCard v-else-if="data" class="p-0!">
       <p v-if="!data.items.length" class="p-6 text-sm text-cocoa-500">
         No categories yet.
       </p>

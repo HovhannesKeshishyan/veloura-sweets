@@ -23,7 +23,6 @@ export const categoryInputSchema = z.object({
   ...categoryFields,
   slug: categoryFields.slug.optional(),
   description: categoryFields.description.optional(),
-  image: categoryFields.image.optional(),
   sortOrder: categoryFields.sortOrder.default(0),
   isActive: categoryFields.isActive.default(true),
 });

@@ -38,11 +38,13 @@ describe.skipIf(!hasDatabase)("catalog services", () => {
   async function seed() {
     const bars = await createCategory({
       name: "Bars",
+      image: { url: "https://example.com/c.jpg", alt: "", provider: "external" },
       sortOrder: 1,
       isActive: true,
     });
     const hidden = await createCategory({
       name: "Hidden",
+      image: { url: "https://example.com/c.jpg", alt: "", provider: "external" },
       sortOrder: 2,
       isActive: false,
     });

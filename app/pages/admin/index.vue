@@ -66,7 +66,7 @@ const tiles = computed(() => {
     >
 
     <template v-else-if="stats">
-      <ul class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <ul class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <li v-for="tile in tiles" :key="tile.label">
           <AdminCard>
             <p
@@ -80,7 +80,7 @@ const tiles = computed(() => {
         </li>
       </ul>
 
-      <div class="mt-8 grid gap-6 xl:grid-cols-[2fr_1fr]">
+      <div class="mt-8 grid grid-cols-1 gap-6 xl:grid-cols-[2fr_1fr]">
         <AdminCard>
           <div class="mb-4 flex items-center justify-between">
             <h2 class="text-2xl">Recent orders</h2>

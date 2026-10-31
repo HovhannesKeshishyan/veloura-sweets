@@ -77,7 +77,7 @@ async function setStatus(status: OrderStatus) {
         <StatusBadge :status="order.paymentStatus" kind="payment" />
       </AdminPageHeader>
 
-      <div class="grid gap-6 xl:grid-cols-[2fr_1fr]">
+      <div class="grid grid-cols-1 gap-6 xl:grid-cols-[2fr_1fr]">
         <AdminCard><OrderDetails :order="order" /></AdminCard>
 
         <div class="space-y-6">
@@ -103,7 +103,7 @@ async function setStatus(status: OrderStatus) {
                   :disabled="updating"
                   :class="
                     s === 'cancelled'
-                      ? 'btn-outline hover:!border-red-800 hover:!text-red-800'
+                      ? 'btn-outline hover:border-red-800! hover:text-red-800!'
                       : 'btn-primary'
                   "
                   @click="setStatus(s)"

@@ -5,6 +5,5 @@ import withNuxt from "./.nuxt/eslint.config.mjs";
 export default withNuxt({
   plugins: { "@stylistic": stylistic },
   rules: {
-    "@stylistic/quotes": ["error", "double", { avoidEscape: true, allowTemplateLiterals: "always" }],
-  },
+    "@stylistic/quotes": ["error", "double", { avoidEscape: true, allowTemplateLiterals: "always" }],  },
 });

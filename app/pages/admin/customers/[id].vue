@@ -33,7 +33,7 @@ const fmtDate = (iso: string | null) =>
         :description="data.customer.email"
         class="mt-3"
       />
-      <div class="grid gap-6 xl:grid-cols-[1fr_2fr]">
+      <div class="grid grid-cols-1 gap-6 xl:grid-cols-[1fr_2fr]">
         <AdminCard>
           <dl class="space-y-4 text-sm">
             <div>
@@ -64,7 +64,7 @@ const fmtDate = (iso: string | null) =>
             </div>
           </dl>
         </AdminCard>
-        <AdminCard class="!p-0">
+        <AdminCard class="p-0!">
           <h2 class="px-6 pt-6 text-2xl">Order history</h2>
           <p v-if="!data.orders.length" class="p-6 text-sm text-cocoa-500">
             No orders yet.

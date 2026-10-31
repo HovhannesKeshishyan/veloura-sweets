@@ -5,6 +5,7 @@ import {
   registerSchema,
 } from "../../shared/schemas/auth";
 import {
+  categoryInputSchema,
   categoryUpdateSchema,
   productInputSchema,
   productUpdateSchema,
@@ -81,6 +82,19 @@ describe("catalog schemas", () => {
     expect(categoryUpdateSchema.parse({ name: "Bars" })).toEqual({
       name: "Bars",
     });
+  });
+
+  it("requires a category image on create", () => {
+    expect(categoryInputSchema.safeParse({ name: "Bars" }).success).toBe(false);
+    expect(
+      categoryInputSchema.safeParse({
+        name: "Bars",
+        image: { url: "/uploads/bars.webp" },
+      }).success,
+    ).toBe(true);
+    expect(
+      categoryUpdateSchema.safeParse({ image: null }).success,
+    ).toBe(false);
   });
 
   it("requires integer minor-unit prices", () => {

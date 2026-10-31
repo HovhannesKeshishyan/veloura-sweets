@@ -64,7 +64,7 @@ const fmtDate = (iso: string | null) =>
             </div>
           </dl>
         </AdminCard>
-        <AdminCard class="!p-0">
+        <AdminCard class="p-0!">
           <h2 class="px-6 pt-6 text-2xl">Order history</h2>
           <p v-if="!data.orders.length" class="p-6 text-sm text-cocoa-500">
             No orders yet.

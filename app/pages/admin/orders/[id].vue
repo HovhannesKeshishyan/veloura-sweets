@@ -103,7 +103,7 @@ async function setStatus(status: OrderStatus) {
                   :disabled="updating"
                   :class="
                     s === 'cancelled'
-                      ? 'btn-outline hover:!border-red-800 hover:!text-red-800'
+                      ? 'btn-outline hover:border-red-800! hover:text-red-800!'
                       : 'btn-primary'
                   "
                   @click="setStatus(s)"

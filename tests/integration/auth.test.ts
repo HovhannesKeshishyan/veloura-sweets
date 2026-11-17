@@ -102,16 +102,51 @@ describe.skipIf(!hasDatabase)("auth service", () => {
       email: "owner@example.com",
       password: "password-123",
     });
-    const admin = await upsertAdmin({
+    const { user: admin, created } = await upsertAdmin({
       email: "owner@example.com",
       name: "Ignored",
       password: "new-password-1",
     });
-    expect(admin?.role).toBe("admin");
-    expect(admin?.name).toBe("Owner");
+    expect(created).toBe(false);
+    expect(admin.role).toBe("admin");
+    expect(admin.name).toBe("Owner");
     await expect(
       authenticate({ email: "owner@example.com", password: "new-password-1" }),
     ).resolves.toBeTruthy();
+  });
+
+  it("reports when it creates a brand-new admin", async () => {
+    const { user, created, revokedSessions } = await upsertAdmin({
+      email: "fresh@example.com",
+      name: "Fresh Admin",
+      password: "new-password-1",
+    });
+    expect(created).toBe(true);
+    expect(revokedSessions).toBe(0);
+    expect(user.role).toBe("admin");
+    expect(user.name).toBe("Fresh Admin");
+  });
+
+  it("revokes pre-existing sessions when promoting an account to admin", async () => {
+    // Someone registers the owner's email before the owner runs create-admin.
+    const squatter = await registerCustomer({
+      name: "Squatter",
+      email: "boss@example.com",
+      password: "password-123",
+    });
+    const { token } = await createSession(squatter._id, SECRET);
+    expect(await resolveSession(token, SECRET)).not.toBeNull();
+
+    const { revokedSessions } = await upsertAdmin({
+      email: "boss@example.com",
+      name: "Boss",
+      password: "new-password-1",
+    });
+
+    expect(revokedSessions).toBe(1);
+    // The old session must not survive and turn into an admin session.
+    expect(await resolveSession(token, SECRET)).toBeNull();
+    expect(await Session.countDocuments({ user: squatter._id })).toBe(0);
   });
 });
 

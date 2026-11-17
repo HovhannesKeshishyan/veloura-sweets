@@ -86,12 +86,23 @@ async function main() {
   }
 
   await connectToDatabase(uri);
-  const user = await upsertAdmin({
+  const { user, created, revokedSessions } = await upsertAdmin({
     email: args.data.email,
     name: args.data.name,
     password: pw.data,
   });
-  console.log(`Admin ready: ${user?.email}`);
+  if (created) {
+    console.log(`Admin created: ${user.email}`);
+  } else {
+    console.warn(
+      `Existing account promoted to admin: ${user.email} (name: "${user.name}").\n` +
+        "  Its password was reset. If you did not create this account yourself, " +
+        "check its orders and profile.",
+    );
+  }
+  if (revokedSessions > 0) {
+    console.log(`Signed out ${revokedSessions} existing session(s).`);
+  }
   await disconnectFromDatabase();
 }
 

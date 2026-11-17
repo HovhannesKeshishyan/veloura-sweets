@@ -1,7 +1,7 @@
 import { createError } from "h3";
 import type { UserRole } from "../../shared/constants";
 import type { LoginInput, RegisterInput } from "../../shared/schemas/auth";
-import { User, type IUser } from "../db/models";
+import { Session, User, type IUser } from "../db/models";
 import {
   hashPassword,
   needsRehash,
@@ -74,6 +74,11 @@ export async function authenticate(input: LoginInput): Promise<IUser> {
 /**
  * Creates an admin, or promotes an existing account and resets its password.
  * Only reachable from the CLI script — there is no HTTP route that grants roles.
+ *
+ * Every existing session for the account is revoked. Sessions resolve the role
+ * from the database on each request, so without this a session opened before
+ * the promotion (e.g. by someone who registered the owner's email first, or
+ * who compromised the account) would silently become an admin session.
  */
 export async function upsertAdmin(input: {
   email: string;
@@ -82,13 +87,24 @@ export async function upsertAdmin(input: {
 }) {
   const passwordHash = await hashPassword(input.password);
   const role: UserRole = "admin";
-  const user = await User.findOneAndUpdate(
+  const result = await User.findOneAndUpdate(
     { email: input.email },
     {
       $set: { role, passwordHash, isActive: true },
       $setOnInsert: { name: input.name },
     },
-    { upsert: true, returnDocument: "after", runValidators: true },
+    {
+      upsert: true,
+      returnDocument: "after",
+      runValidators: true,
+      includeResultMetadata: true,
+    },
   );
-  return user;
+  const user = result.value;
+  if (!user) throw new Error("Failed to create admin user");
+
+  const created = !result.lastErrorObject?.updatedExisting;
+  const { deletedCount } = await Session.deleteMany({ user: user._id });
+
+  return { user, created, revokedSessions: deletedCount };
 }

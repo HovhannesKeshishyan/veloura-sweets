@@ -197,10 +197,14 @@ function state(c: CouponDTO) {
         />
         <div class="flex flex-col gap-1.5">
           <label for="cp-type" class="field-label">Discount type</label>
-          <select id="cp-type" v-model="form.type" class="field">
-            <option value="percentage">Percentage</option>
-            <option value="fixed">Fixed amount</option>
-          </select>
+          <AppSelect
+            id="cp-type"
+            v-model="form.type"
+            :options="[
+              { value: 'percentage', label: 'Percentage' },
+              { value: 'fixed', label: 'Fixed amount' },
+            ]"
+          />
         </div>
         <FormField
           v-if="form.type === 'percentage'"
@@ -291,20 +295,22 @@ function state(c: CouponDTO) {
           <label for="cp-products" class="field-label"
             >Limit to products
             <span class="font-normal text-cocoa-500"
-              >(optional; Ctrl/⌘-click to select several)</span
+              >(optional; pick as many as you like)</span
             ></label
           >
-          <select
+          <AppSelect
             id="cp-products"
             v-model="form.products"
             multiple
-            size="6"
-            class="field"
-          >
-            <option v-for="p in products?.items" :key="p.id" :value="p.id">
-              {{ p.name }}
-            </option>
-          </select>
+            searchable
+            placeholder="All products"
+            :options="
+              (products?.items ?? []).map((p) => ({
+                value: p.id,
+                label: p.name,
+              }))
+            "
+          />
           <p class="text-xs text-cocoa-500">
             With no limits, the coupon applies to the whole bag.
           </p>

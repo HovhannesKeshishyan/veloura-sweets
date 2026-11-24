@@ -316,11 +316,15 @@ async function save() {
       <AdminCard class="space-y-5">
         <div class="flex flex-col gap-1.5">
           <label for="p-status" class="field-label">Status</label>
-          <select id="p-status" v-model="form.status" class="field">
-            <option value="draft">Draft — hidden from the shop</option>
-            <option value="active">Active — on sale</option>
-            <option value="archived">Archived</option>
-          </select>
+          <AppSelect
+            id="p-status"
+            v-model="form.status"
+            :options="[
+              { value: 'draft', label: 'Draft — hidden from the shop' },
+              { value: 'active', label: 'Active — on sale' },
+              { value: 'archived', label: 'Archived' },
+            ]"
+          />
         </div>
         <label class="flex items-center gap-3 text-sm">
           <input
@@ -358,12 +362,17 @@ async function save() {
       <AdminCard class="space-y-5">
         <div class="flex flex-col gap-1.5">
           <label for="p-category" class="field-label">Category</label>
-          <select id="p-category" v-model="form.category" class="field">
-            <option value="">Uncategorised</option>
-            <option v-for="c in categories?.items" :key="c.id" :value="c.id">
-              {{ c.name }}{{ c.isActive ? "" : " (inactive)" }}
-            </option>
-          </select>
+          <AppSelect
+            id="p-category"
+            v-model="form.category"
+            :options="[
+              { value: '', label: 'Uncategorised' },
+              ...(categories?.items ?? []).map((c) => ({
+                value: c.id,
+                label: `${c.name}${c.isActive ? '' : ' (inactive)'}`,
+              })),
+            ]"
+          />
         </div>
         <FormField
           v-model="form.tags"

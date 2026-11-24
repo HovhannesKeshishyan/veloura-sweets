@@ -178,27 +178,20 @@ async function placeOrder() {
                   Country
                   <span aria-hidden="true" class="text-gold-600">*</span>
                 </label>
-                <select
+                <AppSelect
                   id="country"
                   v-model="form.country"
-                  required
-                  autocomplete="country"
-                  class="rounded-xl border bg-white/70 px-4 py-3 focus:border-gold-500 focus:outline-none"
-                  :class="
-                    fieldErrors.country
-                      ? 'border-red-700/60'
-                      : 'border-cocoa-900/15'
-                  "
-                  :aria-invalid="fieldErrors.country ? 'true' : undefined"
+                  size="lg"
+                  aria-required="true"
+                  placeholder="Select a country"
+                  :invalid="!!fieldErrors.country"
                   :aria-describedby="
                     fieldErrors.country ? 'country-error' : undefined
                   "
-                >
-                  <option value="" disabled>Select a country</option>
-                  <option v-for="c in countries" :key="c.code" :value="c.code">
-                    {{ c.name }}
-                  </option>
-                </select>
+                  :options="
+                    countries.map((c) => ({ value: c.code, label: c.name }))
+                  "
+                />
                 <p
                   v-if="fieldErrors.country"
                   id="country-error"

@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { chooseOption } from "./select";
 
 /*
  * Admin workflows against a seeded throwaway database with an admin created by:
@@ -63,8 +64,8 @@ test("admin creates a product that appears in the shop, then archives it", async
     .fill("Created by the end-to-end test.");
   await page.getByLabel(/^Price/).fill("14.50");
   await page.getByLabel("Stock").fill("9");
-  await page.getByLabel("Status").selectOption("active");
-  await page.getByLabel("Category").selectOption({ label: "Bonbons" });
+  await chooseOption(page, "Status", "Active — on sale");
+  await chooseOption(page, "Category", "Bonbons");
   await page
     .getByLabel("Image URL")
     .fill("https://picsum.photos/seed/bonbons-praline/800/1000");
@@ -93,7 +94,7 @@ test("admin creates a coupon that customers can use", async ({ page }) => {
   await page.goto("/admin/coupons");
   await page.getByRole("button", { name: "New coupon" }).click();
   await page.getByLabel("Code").fill(code);
-  await page.getByLabel("Discount type").selectOption("fixed");
+  await chooseOption(page, "Discount type", "Fixed amount");
   await page.getByLabel(/^Amount off/).fill("3");
   await page.getByRole("button", { name: "Save coupon" }).click();
   await expect(page.getByText(`Coupon ${code} saved.`)).toBeVisible();
@@ -129,7 +130,7 @@ test("admin moves an order through fulfillment", async ({ page }) => {
     .fill("1 Toffee Row");
   await page.getByLabel("City").fill("London");
   await page.getByLabel("Postal code").fill("N1 1AA");
-  await page.getByLabel("Country").selectOption("GB");
+  await chooseOption(page, "Country", "United Kingdom");
   await page.getByRole("button", { name: /Place order/ }).click();
   await expect(
     page.getByRole("heading", { level: 1, name: "Your order is placed" }),

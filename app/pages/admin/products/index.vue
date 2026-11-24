@@ -81,52 +81,44 @@ async function archive(product: AdminProductDTO) {
         </button>
       </form>
       <label class="sr-only" for="f-status">Status</label>
-      <select
+      <AppSelect
         id="f-status"
-        class="field w-auto"
-        :value="query.status ?? ''"
-        @change="
-          update({
-            status: ($event.target as HTMLSelectElement).value || undefined,
-          })
-        "
-      >
-        <option value="">All statuses</option>
-        <option value="active">Active</option>
-        <option value="draft">Draft</option>
-        <option value="archived">Archived</option>
-      </select>
+        class="min-w-40"
+        :model-value="query.status ?? ''"
+        :options="[
+          { value: '', label: 'All statuses' },
+          { value: 'active', label: 'Active' },
+          { value: 'draft', label: 'Draft' },
+          { value: 'archived', label: 'Archived' },
+        ]"
+        @update:model-value="update({ status: (($event as string) || undefined) })"
+      />
       <label class="sr-only" for="f-category">Category</label>
-      <select
+      <AppSelect
         id="f-category"
-        class="field w-auto"
-        :value="query.category ?? ''"
-        @change="
-          update({
-            category: ($event.target as HTMLSelectElement).value || undefined,
-          })
-        "
-      >
-        <option value="">All categories</option>
-        <option v-for="c in categories?.items" :key="c.id" :value="c.id">
-          {{ c.name }}
-        </option>
-      </select>
+        class="min-w-44"
+        :model-value="query.category ?? ''"
+        :options="[
+          { value: '', label: 'All categories' },
+          ...(categories?.items ?? []).map((c) => ({
+            value: c.id,
+            label: c.name,
+          })),
+        ]"
+        @update:model-value="update({ category: (($event as string) || undefined) })"
+      />
       <label class="sr-only" for="f-stock">Stock</label>
-      <select
+      <AppSelect
         id="f-stock"
-        class="field w-auto"
-        :value="query.stock ?? ''"
-        @change="
-          update({
-            stock: ($event.target as HTMLSelectElement).value || undefined,
-          })
-        "
-      >
-        <option value="">Any stock</option>
-        <option value="low">Low stock</option>
-        <option value="out">Sold out</option>
-      </select>
+        class="min-w-36"
+        :model-value="query.stock ?? ''"
+        :options="[
+          { value: '', label: 'Any stock' },
+          { value: 'low', label: 'Low stock' },
+          { value: 'out', label: 'Sold out' },
+        ]"
+        @update:model-value="update({ stock: (($event as string) || undefined) })"
+      />
     </div>
 
     <AdminNotice v-if="message" :tone="message.tone" class="mb-4">{{

@@ -102,38 +102,36 @@ function update(patch: Record<string, string | undefined>) {
       </form>
 
       <div class="flex flex-wrap items-center gap-3">
-        <label class="flex items-center gap-2 text-sm">
-          <span class="text-cocoa-700">Collection</span>
-          <select
-            :value="query.category ?? ''"
-            class="rounded-full border border-cocoa-900/15 bg-white/70 px-4 py-2"
-            @change="
-              update({
-                category:
-                  ($event.target as HTMLSelectElement).value || undefined,
-              })
+        <div class="flex items-center gap-2 text-sm">
+          <label for="filter-collection" class="text-cocoa-700">Collection</label>
+          <AppSelect
+            id="filter-collection"
+            variant="pill"
+            class="min-w-36"
+            :model-value="query.category ?? ''"
+            :options="[
+              { value: '', label: 'All' },
+              ...(categories?.items ?? []).map((c) => ({
+                value: c.slug,
+                label: c.name,
+              })),
+            ]"
+            @update:model-value="
+              update({ category: ($event as string) || undefined })
             "
-          >
-            <option value="">All</option>
-            <option v-for="c in categories?.items" :key="c.id" :value="c.slug">
-              {{ c.name }}
-            </option>
-          </select>
-        </label>
-        <label class="flex items-center gap-2 text-sm">
-          <span class="text-cocoa-700">Sort</span>
-          <select
-            :value="query.sort"
-            class="rounded-full border border-cocoa-900/15 bg-white/70 px-4 py-2"
-            @change="
-              update({ sort: ($event.target as HTMLSelectElement).value })
-            "
-          >
-            <option v-for="o in SORT_OPTIONS" :key="o.value" :value="o.value">
-              {{ o.label }}
-            </option>
-          </select>
-        </label>
+          />
+        </div>
+        <div class="flex items-center gap-2 text-sm">
+          <label for="filter-sort" class="text-cocoa-700">Sort</label>
+          <AppSelect
+            id="filter-sort"
+            variant="pill"
+            class="min-w-44"
+            :model-value="query.sort ?? 'featured'"
+            :options="SORT_OPTIONS"
+            @update:model-value="update({ sort: $event as string })"
+          />
+        </div>
         <button
           type="button"
           class="rounded-full border px-4 py-2 text-sm transition"

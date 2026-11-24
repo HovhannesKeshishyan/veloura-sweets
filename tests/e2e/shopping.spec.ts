@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { chooseOption } from "./select";
 
 /*
  * Full shopping workflows. They need a running server backed by a THROWAWAY
@@ -56,7 +57,7 @@ test("guest browses, applies a coupon and checks out", async ({ page }) => {
     .fill("12 Rue du Chocolat");
   await page.getByLabel("City").fill("Paris");
   await page.getByLabel("Postal code").fill("75003");
-  await page.getByLabel("Country").selectOption("FR");
+  await chooseOption(page, "Country", "France");
   await page.getByRole("button", { name: /Place order — \$26\.80/ }).click();
 
   await expect(
@@ -114,7 +115,7 @@ test("a registered customer sees the order in their history", async ({
     .fill("5 Cocoa Street");
   await page.getByLabel("City").fill("Boston");
   await page.getByLabel("Postal code").fill("02110");
-  await page.getByLabel("Country").selectOption("US");
+  await chooseOption(page, "Country", "United States");
   await page.getByRole("button", { name: /Place order/ }).click();
   await expect(
     page.getByRole("heading", { level: 1, name: "Your order is placed" }),

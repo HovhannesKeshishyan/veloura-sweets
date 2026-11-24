@@ -139,10 +139,45 @@ watch(open, (isOpen) => {
   });
 });
 
+// ---- accessibility plumbing
+
+const uid = useId();
+const listboxId = `${uid}-listbox`;
+
+// Render the popup inside <main> so its content belongs to a landmark
+// (axe "region"); fall back to <body> on pages without one.
+const portalTarget = ref("body");
+onMounted(() => {
+  if (document.querySelector("main")) portalTarget.value = "main";
+});
+
+// Reka's Select is modal: while open it sets aria-hidden on everything else
+// but leaves it focusable (axe "aria-hidden-focus"). Make those elements
+// `inert` too, so they are really unreachable, and undo it on close.
+const selectOpen = ref(false);
+let inerted: HTMLElement[] = [];
+function releaseInert() {
+  for (const el of inerted) el.inert = false;
+  inerted = [];
+}
+watch(selectOpen, (isOpen) => {
+  releaseInert();
+  if (!isOpen) return;
+  // Reka applies aria-hidden after the content mounts.
+  setTimeout(() => {
+    if (!selectOpen.value) return;
+    inerted = [
+      ...document.querySelectorAll<HTMLElement>("[data-aria-hidden='true']"),
+    ].filter((el) => !el.inert);
+    for (const el of inerted) el.inert = true;
+  });
+});
+onBeforeUnmount(releaseInert);
+
 // ---- styling
 
 const triggerClass = computed(() => [
-  "group flex w-full items-center justify-between gap-3 border text-left transition duration-200 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50",
+  "group flex w-full items-center justify-between gap-3 border text-left transition duration-200 focus:outline-none focus-visible:ring-4 focus-visible:ring-gold-400/30 disabled:cursor-not-allowed disabled:opacity-50",
   "data-[state=open]:border-gold-500 data-[state=open]:ring-4 data-[state=open]:ring-gold-400/15",
   props.variant === "pill"
     ? "rounded-full bg-white/70 px-4 py-2 text-sm hover:border-gold-500/60"
@@ -167,6 +202,7 @@ const itemClass =
     <SelectRoot
       v-if="!isSearchable"
       v-model="innerModel"
+      v-model:open="selectOpen"
       :multiple="multiple"
       :disabled="disabled"
     >
@@ -177,7 +213,7 @@ const itemClass =
       >
         <SelectValue
           class="min-w-0 truncate"
-          :class="displayLabel ? 'text-cocoa-900' : 'text-cocoa-500/70'"
+          :class="displayLabel ? 'text-cocoa-900' : 'text-cocoa-500'"
         >
           {{ displayLabel || placeholder }}
         </SelectValue>
@@ -199,7 +235,7 @@ const itemClass =
         </SelectIcon>
       </SelectTrigger>
 
-      <SelectPortal>
+      <SelectPortal :to="portalTarget">
         <SelectContent
           position="popper"
           :side-offset="6"
@@ -263,7 +299,7 @@ const itemClass =
             ref="triggerEl"
             type="button"
             role="combobox"
-            aria-haspopup="listbox"
+            aria-haspopup="dialog"
             tabindex="0"
             :aria-label="(attrs['aria-label'] as string | undefined)"
             :aria-expanded="open"
@@ -276,7 +312,7 @@ const itemClass =
           >
             <span
               class="min-w-0 truncate"
-              :class="displayLabel ? 'text-cocoa-900' : 'text-cocoa-500/70'"
+              :class="displayLabel ? 'text-cocoa-900' : 'text-cocoa-500'"
             >
               {{ displayLabel || placeholder }}
             </span>
@@ -298,12 +334,16 @@ const itemClass =
         </ComboboxTrigger>
       </ComboboxAnchor>
 
-      <ComboboxPortal>
+      <ComboboxPortal :to="portalTarget">
         <ComboboxContent
           position="popper"
           :side-offset="6"
           :collision-padding="8"
           :class="panelClass"
+          role="dialog"
+          aria-label="Choose an option"
+          :aria-multiselectable="undefined"
+          :aria-orientation="undefined"
         >
           <div class="border-b border-cocoa-900/10 p-2">
             <div class="relative">
@@ -321,8 +361,9 @@ const itemClass =
                 auto-focus
                 :display-value="() => ''"
                 aria-label="Filter options"
+                :aria-controls="listboxId"
                 placeholder="Search…"
-                class="w-full rounded-xl bg-cream-100/60 py-2 pr-3 pl-9 text-sm text-cocoa-900 placeholder:text-cocoa-500/60 focus:bg-cream-100 focus:outline-none"
+                class="w-full rounded-xl bg-cream-100/60 py-2 pr-3 pl-9 text-sm text-cocoa-900 placeholder:text-cocoa-500 focus:bg-cream-100 focus:outline-none"
               />
             </div>
           </div>
@@ -331,6 +372,14 @@ const itemClass =
             <ComboboxEmpty class="px-3 py-6 text-center text-sm text-cocoa-500">
               No matches
             </ComboboxEmpty>
+            <!-- Reka forces role="presentation" on the viewport, so the
+                 listbox role lives on this wrapper around the options. -->
+            <div
+              :id="listboxId"
+              role="listbox"
+              aria-label="Options"
+              :aria-multiselectable="multiple ? 'true' : undefined"
+            >
             <ComboboxItem
               v-for="o in options"
               :key="o.value"
@@ -364,6 +413,7 @@ const itemClass =
                 <path d="m5 10.5 3.2 3L15 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
               </svg>
             </ComboboxItem>
+            </div>
           </ComboboxViewport>
 
           <div
